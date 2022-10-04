@@ -9,9 +9,35 @@ import (
 )
 
 const (
-	validatorChallenge = 4 * time.Second
-	networkStartPeriod = 3 * time.Hour
+	validatorChallenge           = 4 * time.Second
+	networkStartPeriod           = 3 * time.Hour
+	lowStakeThresholdBasisPoints = 5 // 0.05
 )
+
+// divideValidators divides a set of validators into two subsets, low and high.
+// high contains all the validators where weight/total_weight > threshold
+// low contains all the validators where weight/total_weight <= threshold
+// where threshold = thresholdBasisPoints / 100
+func divideValidators(validators *pos.Validators, thresholdBasisPoints uint64) (low, high *pos.Validators) {
+	threshold := piecefunc.Div(thresholdBasisPoints, 100)
+	cut := int(validators.Len())
+	for i, weight := range validators.SortedWeights() { // descending order
+		weightShare := piecefunc.Div(uint64(weight), uint64(validators.TotalWeight()))
+		if weightShare <= threshold {
+			cut = i
+			break
+		}
+	}
+	lowStakesGroup := pos.ArrayToValidators(
+		validators.SortedIDs()[cut:],
+		validators.SortedWeights()[cut:],
+	)
+	highStakesGroup := pos.ArrayToValidators(
+		validators.SortedIDs()[:cut],
+		validators.SortedWeights()[:cut],
+	)
+	return lowStakesGroup, highStakesGroup
+}
 
 func (em *Emitter) recountValidators(validators *pos.Validators) {
 	// stakers with lower stake should emit less events to reduce network load

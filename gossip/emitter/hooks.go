@@ -1,6 +1,7 @@
 package emitter
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/Fantom-foundation/lachesis-base/emitter/ancestor"
@@ -40,6 +41,12 @@ func (em *Emitter) OnNewEpoch(newValidators *pos.Validators, newEpoch idx.Epoch)
 	em.challenges = make(map[idx.ValidatorID]time.Time)
 	em.expectedEmitIntervals = make(map[idx.ValidatorID]time.Duration)
 	em.stakeRatio = make(map[idx.ValidatorID]uint64)
+
+	// XXX divide into low stakes and high stakes
+	// XXX do we need to exclude offline nodes?
+	em.lowStakesGroup, em.highStakesGroup = divideValidators(newValidators, lowStakeThresholdBasisPoints)
+	fmt.Printf("XXX low stakes group: count = %d, tot-weight = %d\n", em.lowStakesGroup.Len(), em.lowStakesGroup.TotalWeight())
+	fmt.Printf("XXX high stakes group: count = %d, tot-weight = %d\n", em.highStakesGroup.Len(), em.highStakesGroup.TotalWeight())
 
 	em.recountValidators(newValidators)
 

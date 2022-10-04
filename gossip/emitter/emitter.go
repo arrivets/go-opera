@@ -57,6 +57,13 @@ type Emitter struct {
 	expectedEmitIntervals map[idx.ValidatorID]time.Duration
 	stakeRatio            map[idx.ValidatorID]uint64
 
+	// lowStakesGroup tracks the set of validators whose weight is below the
+	// threshold
+	lowStakesGroup *pos.Validators
+	// highStakesGroup tracks the set of validators whose weight is above the
+	// threshold
+	highStakesGroup *pos.Validators
+
 	prevRecheckedChallenges time.Time
 
 	quorumIndexer  *ancestor.QuorumIndexer
